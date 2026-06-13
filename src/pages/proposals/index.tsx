@@ -143,6 +143,9 @@ const ProposalsPage: React.FC = () => {
     }
 
     const selectedColumn = columns.find(c => c.id === formData.columnId);
+    const finalReferences = referenceInput.trim() 
+      ? [...formData.references, referenceInput.trim()]
+      : formData.references;
     const newProposal: Proposal = {
       id: Date.now().toString(),
       columnId: formData.columnId,
@@ -150,7 +153,7 @@ const ProposalsPage: React.FC = () => {
       title: formData.title.trim(),
       targetReader: formData.targetReader.trim(),
       coreViewpoint: formData.coreViewpoint.trim(),
-      references: formData.references,
+      references: finalReferences,
       author: '当前用户',
       votes: 0,
       comments: 0,
