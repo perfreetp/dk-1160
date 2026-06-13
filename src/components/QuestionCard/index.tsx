@@ -11,6 +11,11 @@ interface QuestionCardProps {
 }
 
 const QuestionCard: React.FC<QuestionCardProps> = ({ question, onLink, onClick }) => {
+  const handleLinkClick = (e: any) => {
+    e.stopPropagation?.();
+    onLink?.();
+  };
+
   return (
     <View className={styles.card} onClick={onClick}>
       <View className={styles.header}>
@@ -32,7 +37,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, onLink, onClick }
       <View className={styles.footer}>
         <Text className={styles.time}>{question.createdAt}</Text>
         {!question.proposalId && question.status !== 'resolved' && (
-          <Button className={styles.linkButton} onClick={onLink}>
+          <Button className={styles.linkButton} onClick={handleLinkClick}>
             <Text className={styles.linkButtonText}>关联选题</Text>
           </Button>
         )}
