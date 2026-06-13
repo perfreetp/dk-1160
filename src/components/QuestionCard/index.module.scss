@@ -1,0 +1,91 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.sourceTag {
+  background: $color-bg-hover;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+}
+
+.sourceText {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  white-space: nowrap;
+}
+
+.content {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  line-height: $line-height-loose;
+  margin-bottom: $spacing-md;
+  @include text-ellipsis-multi(3);
+}
+
+.linkInfo {
+  background: $color-tag-bg;
+  padding: $spacing-sm;
+  border-radius: $radius-sm;
+  margin-bottom: $spacing-md;
+}
+
+.linkLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.linkTitle {
+  font-size: $font-size-sm;
+  color: $color-tag-text;
+  margin-left: $spacing-xs;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.time {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.linkButton {
+  @include button-reset;
+  background: $color-primary;
+  border-radius: $radius-button;
+  height: 56rpx;
+  padding: 0 $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.linkButtonText {
+  font-size: $font-size-xs;
+  color: $color-text-white;
+  white-space: nowrap;
+}

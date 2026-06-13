@@ -1,0 +1,117 @@
+@use '@/styles/variables.scss' as *;
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-xs;
+  white-space: nowrap;
+
+  &.small {
+    padding: 4rpx 12rpx;
+    
+    .text {
+      font-size: 20rpx;
+    }
+  }
+
+  &.medium {
+    padding: 8rpx 16rpx;
+    
+    .text {
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+.text {
+  font-weight: $font-weight-medium;
+}
+
+.pending {
+  background: #fef3c7;
+  
+  .text {
+    color: #d97706;
+  }
+}
+
+.approved {
+  background: #d1fae5;
+  
+  .text {
+    color: #059669;
+  }
+}
+
+.rejected {
+  background: #fee2e2;
+  
+  .text {
+    color: #dc2626;
+  }
+}
+
+.scheduled {
+  background: #dbeafe;
+  
+  .text {
+    color: #2563eb;
+  }
+}
+
+.published {
+  background: #e0e7ff;
+  
+  .text {
+    color: #4f46e5;
+  }
+}
+
+.drafting {
+  background: #fef3c7;
+  
+  .text {
+    color: #d97706;
+  }
+}
+
+.reviewing {
+  background: #fed7aa;
+  
+  .text {
+    color: #ea580c;
+  }
+}
+
+.finalizing {
+  background: #c7d2fe;
+  
+  .text {
+    color: #4f46e5;
+  }
+}
+
+.ready {
+  background: #bbf7d0;
+  
+  .text {
+    color: #16a34a;
+  }
+}
+
+.processing {
+  background: #dbeafe;
+  
+  .text {
+    color: #2563eb;
+  }
+}
+
+.resolved {
+  background: #d1fae5;
+  
+  .text {
+    color: #059669;
+  }
+}

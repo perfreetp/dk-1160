@@ -1,0 +1,46 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background: $color-bg-page;
+}
+
+.header {
+  background: $color-bg-card;
+  padding: $spacing-lg;
+  box-shadow: $shadow-float;
+}
+
+.title {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.weekInfo {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.list {
+  padding: $spacing-lg;
+  height: calc(100vh - 160rpx);
+}
+
+.dateGroup {
+  margin-bottom: $spacing-lg;
+}
+
+.dateHeader {
+  background: $color-bg-page;
+  padding: $spacing-sm $spacing-lg;
+  margin-bottom: $spacing-md;
+  border-radius: $radius-sm;
+}
+
+.dateText {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}

@@ -1,0 +1,158 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.columnTag {
+  background: $color-tag-bg;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+}
+
+.columnText {
+  font-size: 20rpx;
+  color: $color-tag-text;
+  white-space: nowrap;
+}
+
+.title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  @include text-ellipsis-multi(2);
+}
+
+.viewpoint {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+  @include text-ellipsis-multi(2);
+  margin-bottom: $spacing-md;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.author {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.warningTags {
+  display: flex;
+  gap: $spacing-xs;
+}
+
+.duplicateTag {
+  background: #fee2e2;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+}
+
+.duplicateText {
+  font-size: 20rpx;
+  color: #dc2626;
+  white-space: nowrap;
+}
+
+.sensitiveTag {
+  background: #fef3c7;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+}
+
+.sensitiveText {
+  font-size: 20rpx;
+  color: #d97706;
+  white-space: nowrap;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.voteButton {
+  @include button-reset;
+  background: $color-vote-bg;
+  border-radius: $radius-sm;
+  height: 56rpx;
+  padding: 0 $spacing-sm;
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.voteIcon {
+  font-size: 24rpx;
+}
+
+.voteCount {
+  font-size: $font-size-sm;
+  color: $color-vote-text;
+  font-weight: $font-weight-medium;
+}
+
+.commentStat {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.commentIcon {
+  font-size: 24rpx;
+}
+
+.commentCount {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.urgentTag {
+  background: $color-urgent-bg;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+}
+
+.urgentText {
+  font-size: 20rpx;
+  color: $color-urgent-text;
+  white-space: nowrap;
+  font-weight: $font-weight-medium;
+}
