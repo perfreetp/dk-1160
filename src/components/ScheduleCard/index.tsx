@@ -7,10 +7,11 @@ import styles from './index.module.scss';
 interface ScheduleCardProps {
   item: ScheduleItem;
   onRemind?: () => void;
+  onEdit?: () => void;
   onClick?: () => void;
 }
 
-const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, onRemind, onClick }) => {
+const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, onRemind, onEdit, onClick }) => {
   return (
     <View className={styles.card} onClick={onClick}>
       <View className={styles.header}>
@@ -42,11 +43,16 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, onRemind, onClick }) 
             </View>
           )}
         </View>
-        {item.status !== 'ready' && (
-          <Button className={styles.remindButton} onClick={onRemind}>
-            <Text className={styles.remindButtonText}>催办</Text>
+        <View className={styles.actionButtons}>
+          <Button className={styles.editButton} onClick={onEdit}>
+            <Text className={styles.editButtonText}>编辑</Text>
           </Button>
-        )}
+          {item.status !== 'ready' && (
+            <Button className={styles.remindButton} onClick={onRemind}>
+              <Text className={styles.remindButtonText}>催办</Text>
+            </Button>
+          )}
+        </View>
       </View>
     </View>
   );

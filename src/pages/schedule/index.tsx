@@ -183,8 +183,6 @@ const SchedulePage: React.FC = () => {
       await saveData(updatedSchedule);
       Taro.showToast({ title: `状态已更新`, icon: 'success' });
       console.log('[SchedulePage] 更新状态:', item.id, nextStatus);
-    } else {
-      handleEdit(item);
     }
   };
 
@@ -220,6 +218,7 @@ const SchedulePage: React.FC = () => {
                     key={item.id}
                     item={item}
                     onRemind={() => handleRemind(item)}
+                    onEdit={() => handleEdit(item)}
                     onClick={() => handleCardClick(item)}
                   />
                 ))}

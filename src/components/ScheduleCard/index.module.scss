@@ -111,3 +111,28 @@
   color: $color-text-white;
   white-space: nowrap;
 }
+
+.actionButtons {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.editButton {
+  @include button-reset;
+  background: $color-primary;
+  border-radius: $radius-button;
+  height: 56rpx;
+  padding: 0 $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.editButtonText {
+  font-size: $font-size-xs;
+  color: $color-text-white;
+  white-space: nowrap;
+}

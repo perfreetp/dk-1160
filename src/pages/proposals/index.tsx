@@ -62,6 +62,16 @@ const ProposalsPage: React.FC = () => {
   };
 
   const handleAddProposal = () => {
+    if (columns.length > 0) {
+      setFormData({
+        columnId: columns[0].id,
+        title: '',
+        targetReader: '',
+        coreViewpoint: '',
+        references: []
+      });
+      setSelectedColumnIndex(0);
+    }
     setShowModal(true);
   };
 
