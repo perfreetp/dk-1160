@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, Button, ScrollView, Input } from '@tarojs/components';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Button, ScrollView, Input, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import QuestionCard from '@/components/QuestionCard';
 import EmptyState from '@/components/EmptyState';
 import { Question, QuestionFormData } from '@/types/question';
+import { Proposal } from '@/types/proposal';
 import { mockQuestions } from '@/data/questions';
+import { storage, STORAGE_KEYS } from '@/utils/index';
 import styles from './index.module.scss';
 
 const FILTERS = [
@@ -15,17 +17,42 @@ const FILTERS = [
 ];
 
 const QuestionsPage: React.FC = () => {
-  const [questions, setQuestions] = useState<Question[]>(mockQuestions);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkingQuestion, setLinkingQuestion] = useState<Question | null>(null);
+  const [selectedProposalIndex, setSelectedProposalIndex] = useState(0);
   const [formData, setFormData] = useState<QuestionFormData>({
     content: '',
     source: '公众号留言'
   });
 
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    const savedQuestions = await storage.get<Question[]>(STORAGE_KEYS.QUESTIONS, mockQuestions);
+    const savedProposals = await storage.get<Proposal[]>(STORAGE_KEYS.PROPOSALS, []);
+    setQuestions(savedQuestions);
+    setProposals(savedProposals);
+    console.log('[QuestionsPage] 数据加载完成:', savedQuestions.length, '条问题');
+  };
+
+  const saveData = async (data: Question[]) => {
+    await storage.set(STORAGE_KEYS.QUESTIONS, data);
+    setQuestions(data);
+  };
+
   const filteredQuestions = activeFilter === 'all' 
     ? questions 
     : questions.filter(q => q.status === activeFilter);
+
+  const availableProposals = proposals.filter(p => 
+    p.status === 'approved' || p.status === 'scheduled'
+  );
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
@@ -41,7 +68,7 @@ const QuestionsPage: React.FC = () => {
     setFormData({ content: '', source: '公众号留言' });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.content.trim()) {
       Taro.showToast({ title: '请输入问题内容', icon: 'none' });
       return;
@@ -55,25 +82,66 @@ const QuestionsPage: React.FC = () => {
       createdAt: new Date().toISOString().split('T')[0]
     };
 
-    setQuestions([newQuestion, ...questions]);
+    const updatedQuestions = [newQuestion, ...questions];
+    await saveData(updatedQuestions);
     handleCloseModal();
     Taro.showToast({ title: '添加成功', icon: 'success' });
     console.log('[QuestionsPage] 新增问题:', newQuestion);
   };
 
-  const handleLink = (questionId: string) => {
-    Taro.showToast({ title: '关联选题功能开发中', icon: 'none' });
-    console.log('[QuestionsPage] 关联选题:', questionId);
+  const handleLink = (question: Question) => {
+    if (availableProposals.length === 0) {
+      Taro.showToast({ title: '暂无可关联的选题', icon: 'none' });
+      return;
+    }
+    setLinkingQuestion(question);
+    setSelectedProposalIndex(0);
+    setShowLinkModal(true);
+    console.log('[QuestionsPage] 准备关联选题:', question.id);
   };
 
-  const handleCardClick = (question: Question) => {
+  const handleProposalChange = (e) => {
+    setSelectedProposalIndex(e.detail.value);
+  };
+
+  const handleConfirmLink = async () => {
+    if (!linkingQuestion) return;
+
+    const selectedProposal = availableProposals[selectedProposalIndex];
+    const updatedQuestions = questions.map(q => 
+      q.id === linkingQuestion.id 
+        ? { 
+            ...q, 
+            proposalId: selectedProposal.id,
+            proposalTitle: selectedProposal.title,
+            status: 'processing'
+          }
+        : q
+    );
+
+    await saveData(updatedQuestions);
+    setShowLinkModal(false);
+    setLinkingQuestion(null);
+    Taro.showToast({ title: '关联成功', icon: 'success' });
+    console.log('[QuestionsPage] 关联选题:', linkingQuestion.id, selectedProposal.id);
+  };
+
+  const handleCardClick = async (question: Question) => {
+    let newStatus = question.status;
     if (question.status === 'pending') {
-      setQuestions(questions.map(q => 
-        q.id === question.id ? { ...q, status: 'processing' } : q
-      ));
-      Taro.showToast({ title: '已标记为处理中', icon: 'success' });
-      console.log('[QuestionsPage] 更新状态:', question.id, 'processing');
+      newStatus = 'processing';
+    } else if (question.status === 'processing') {
+      newStatus = 'resolved';
+    } else {
+      return;
     }
+
+    const updatedQuestions = questions.map(q => 
+      q.id === question.id ? { ...q, status: newStatus } : q
+    );
+    await saveData(updatedQuestions);
+    Taro.showToast({ title: `状态已更新为${newStatus}`, icon: 'success' });
+    console.log('[QuestionsPage] 更新状态:', question.id, newStatus);
   };
 
   return (
@@ -108,7 +176,7 @@ const QuestionsPage: React.FC = () => {
             <QuestionCard
               key={question.id}
               question={question}
-              onLink={() => handleLink(question.id)}
+              onLink={() => handleLink(question)}
               onClick={() => handleCardClick(question)}
             />
           ))
@@ -146,6 +214,48 @@ const QuestionsPage: React.FC = () => {
               </Button>
               <Button className={styles.submitButton} onClick={handleSubmit}>
                 <Text className={styles.submitButtonText}>提交</Text>
+              </Button>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {showLinkModal && linkingQuestion && (
+        <View className={styles.modalOverlay} onClick={() => setShowLinkModal(false)}>
+          <View className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <Text className={styles.modalTitle}>关联选题</Text>
+            
+            <View className={styles.formGroup}>
+              <Text className={styles.label}>当前问题</Text>
+              <Text className={styles.questionContent}>{linkingQuestion.content}</Text>
+            </View>
+
+            <View className={styles.formGroup}>
+              <Text className={styles.label}>选择选题 *</Text>
+              <Picker 
+                mode='selector' 
+                range={availableProposals.map(p => `${p.columnName} - ${p.title}`)} 
+                value={selectedProposalIndex}
+                onChange={handleProposalChange}
+              >
+                <View className={styles.picker}>
+                  <Text className={styles.pickerText}>
+                    {availableProposals[selectedProposalIndex] 
+                      ? `${availableProposals[selectedProposalIndex].columnName} - ${availableProposals[selectedProposalIndex].title}`
+                      : '请选择选题'
+                    }
+                  </Text>
+                  <Text className={styles.pickerArrow}>▼</Text>
+                </View>
+              </Picker>
+            </View>
+
+            <View className={styles.modalButtons}>
+              <Button className={styles.cancelButton} onClick={() => setShowLinkModal(false)}>
+                <Text className={styles.cancelButtonText}>取消</Text>
+              </Button>
+              <Button className={styles.submitButton} onClick={handleConfirmLink}>
+                <Text className={styles.submitButtonText}>确认关联</Text>
               </Button>
             </View>
           </View>

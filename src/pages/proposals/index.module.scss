@@ -203,3 +203,155 @@
   color: $color-text-white;
   font-weight: $font-weight-medium;
 }
+
+.picker {
+  width: 100%;
+  background: $color-bg-page;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-sm;
+  padding: $spacing-md;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.pickerText {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.pickerArrow {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.referenceInputRow {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: center;
+}
+
+.referenceInput {
+  flex: 1;
+  background: $color-bg-page;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-sm;
+  padding: $spacing-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.addRefButton {
+  @include button-reset;
+  background: $color-primary;
+  border-radius: $radius-sm;
+  height: 64rpx;
+  width: 64rpx;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.addRefButtonText {
+  font-size: $font-size-lg;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}
+
+.referenceList {
+  margin-top: $spacing-sm;
+}
+
+.referenceItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $color-bg-hover;
+  padding: $spacing-sm;
+  border-radius: $radius-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.referenceText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  flex: 1;
+  @include text-ellipsis;
+}
+
+.removeRefButton {
+  @include button-reset;
+  background: $color-error;
+  border-radius: $radius-sm;
+  height: 48rpx;
+  width: 48rpx;
+  margin-left: $spacing-sm;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.removeRefButtonText {
+  font-size: $font-size-md;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}
+
+.detailModal {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  width: 600rpx;
+  max-width: 90%;
+  max-height: 80vh;
+  box-shadow: $shadow-popup;
+  overflow-y: auto;
+}
+
+.detailGroup {
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.detailLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.detailValue {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  line-height: $line-height-normal;
+}
+
+.closeButton {
+  @include button-reset;
+  width: 100%;
+  background: $color-primary;
+  border-radius: $radius-button;
+  height: $button-height-md;
+  margin-top: $spacing-lg;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.closeButtonText {
+  font-size: $font-size-md;
+  color: $color-text-white;
+  font-weight: $font-weight-medium;
+}

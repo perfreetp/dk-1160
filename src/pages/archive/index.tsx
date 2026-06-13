@@ -1,14 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, Input, Button } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import ArchiveCard from '@/components/ArchiveCard';
 import EmptyState from '@/components/EmptyState';
 import { ArchiveItem } from '@/types/archive';
 import { mockArchive } from '@/data/archive';
+import { storage, STORAGE_KEYS } from '@/utils/index';
 import styles from './index.module.scss';
 
 const ArchivePage: React.FC = () => {
-  const [archive, setArchive] = useState<ArchiveItem[]>(mockArchive);
+  const [archive, setArchive] = useState<ArchiveItem[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ArchiveItem | null>(null);
   const [formData, setFormData] = useState({
@@ -16,6 +17,21 @@ const ArchivePage: React.FC = () => {
     shareCount: 0,
     leadCount: 0
   });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    const savedArchive = await storage.get<ArchiveItem[]>(STORAGE_KEYS.ARCHIVE, mockArchive);
+    setArchive(savedArchive);
+    console.log('[ArchivePage] 数据加载完成:', savedArchive.length, '条归档');
+  };
+
+  const saveData = async (data: ArchiveItem[]) => {
+    await storage.set(STORAGE_KEYS.ARCHIVE, data);
+    setArchive(data);
+  };
 
   const totalStats = useMemo(() => {
     return {
@@ -49,10 +65,10 @@ const ArchivePage: React.FC = () => {
     setFormData({ readCount: 0, shareCount: 0, leadCount: 0 });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!editingItem) return;
 
-    setArchive(archive.map(item => 
+    const updatedArchive = archive.map(item => 
       item.id === editingItem.id 
         ? { 
             ...item, 
@@ -61,8 +77,9 @@ const ArchivePage: React.FC = () => {
             leadCount: formData.leadCount
           }
         : item
-    ));
+    );
     
+    await saveData(updatedArchive);
     handleCloseModal();
     Taro.showToast({ title: '数据已更新', icon: 'success' });
     console.log('[ArchivePage] 更新数据:', editingItem.id, formData);
@@ -112,7 +129,7 @@ const ArchivePage: React.FC = () => {
         <View className={styles.modalOverlay} onClick={handleCloseModal}>
           <View className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <Text className={styles.modalTitle}>编辑效果数据</Text>
-            <Text className={styles.label}>{editingItem.title}</Text>
+            <Text className={styles.itemTitle}>{editingItem.title}</Text>
             
             <View className={styles.formGroup}>
               <Text className={styles.label}>阅读数</Text>

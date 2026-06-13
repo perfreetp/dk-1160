@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, Button, ScrollView, Input } from '@tarojs/components';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Button, ScrollView, Input, Picker, Textarea } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import ProposalCard from '@/components/ProposalCard';
 import EmptyState from '@/components/EmptyState';
@@ -7,6 +7,7 @@ import { Proposal, ProposalFormData } from '@/types/proposal';
 import { Column } from '@/types/column';
 import { mockProposals } from '@/data/proposals';
 import { mockColumns } from '@/data/columns';
+import { storage, STORAGE_KEYS, checkDuplicateTitle, checkSensitiveWords } from '@/utils/index';
 import styles from './index.module.scss';
 
 const FILTERS = [
@@ -18,10 +19,12 @@ const FILTERS = [
 ];
 
 const ProposalsPage: React.FC = () => {
-  const [proposals, setProposals] = useState<Proposal[]>(mockProposals);
-  const [columns] = useState<Column[]>(mockColumns);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [columns, setColumns] = useState<Column[]>(mockColumns);
   const [activeFilter, setActiveFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [formData, setFormData] = useState<ProposalFormData>({
     columnId: '',
     title: '',
@@ -29,6 +32,25 @@ const ProposalsPage: React.FC = () => {
     coreViewpoint: '',
     references: []
   });
+  const [referenceInput, setReferenceInput] = useState('');
+  const [selectedColumnIndex, setSelectedColumnIndex] = useState(0);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    const savedProposals = await storage.get<Proposal[]>(STORAGE_KEYS.PROPOSALS, mockProposals);
+    const savedColumns = await storage.get<Column[]>(STORAGE_KEYS.COLUMNS, mockColumns);
+    setProposals(savedProposals);
+    setColumns(savedColumns);
+    console.log('[ProposalsPage] 数据加载完成:', savedProposals.length, '条选题');
+  };
+
+  const saveData = async (data: Proposal[]) => {
+    await storage.set(STORAGE_KEYS.PROPOSALS, data);
+    setProposals(data);
+  };
 
   const filteredProposals = activeFilter === 'all' 
     ? proposals 
@@ -46,9 +68,32 @@ const ProposalsPage: React.FC = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     setFormData({ columnId: '', title: '', targetReader: '', coreViewpoint: '', references: [] });
+    setReferenceInput('');
+    setSelectedColumnIndex(0);
   };
 
-  const handleSubmit = () => {
+  const handleColumnChange = (e) => {
+    const index = e.detail.value;
+    setSelectedColumnIndex(index);
+    setFormData({ ...formData, columnId: columns[index]?.id || '' });
+  };
+
+  const handleAddReference = () => {
+    if (referenceInput.trim()) {
+      setFormData({
+        ...formData,
+        references: [...formData.references, referenceInput.trim()]
+      });
+      setReferenceInput('');
+    }
+  };
+
+  const handleRemoveReference = (index: number) => {
+    const newReferences = formData.references.filter((_, i) => i !== index);
+    setFormData({ ...formData, references: newReferences });
+  };
+
+  const handleSubmit = async () => {
     if (!formData.columnId) {
       Taro.showToast({ title: '请选择栏目', icon: 'none' });
       return;
@@ -60,6 +105,31 @@ const ProposalsPage: React.FC = () => {
     if (!formData.coreViewpoint.trim()) {
       Taro.showToast({ title: '请输入核心观点', icon: 'none' });
       return;
+    }
+
+    const existingTitles = proposals.map(p => p.title);
+    const isDuplicate = checkDuplicateTitle(formData.title, existingTitles);
+    
+    const sensitiveCheck = checkSensitiveWords(formData.title + ' ' + formData.coreViewpoint);
+    
+    if (isDuplicate) {
+      const res = await Taro.showModal({
+        title: '重复选题提醒',
+        content: '该标题与已有选题重复或高度相似，是否继续提交？',
+        confirmText: '继续提交',
+        cancelText: '修改'
+      });
+      if (!res.confirm) return;
+    }
+    
+    if (sensitiveCheck.hasSensitive) {
+      const res = await Taro.showModal({
+        title: '敏感词提醒',
+        content: `内容包含敏感词：${sensitiveCheck.words.join(', ')}，是否继续提交？`,
+        confirmText: '继续提交',
+        cancelText: '修改'
+      });
+      if (!res.confirm) return;
     }
 
     const selectedColumn = columns.find(c => c.id === formData.columnId);
@@ -80,29 +150,36 @@ const ProposalsPage: React.FC = () => {
       assignee: '',
       outline: '',
       interviewees: [],
-      isDuplicate: false,
-      hasSensitiveWords: false,
+      isDuplicate,
+      hasSensitiveWords: sensitiveCheck.hasSensitive,
       createdAt: new Date().toISOString().split('T')[0],
       updatedAt: new Date().toISOString().split('T')[0]
     };
 
-    setProposals([newProposal, ...proposals]);
+    const updatedProposals = [newProposal, ...proposals];
+    await saveData(updatedProposals);
     handleCloseModal();
-    Taro.showToast({ title: '提交成功', icon: 'success' });
+    
+    const message = isDuplicate || sensitiveCheck.hasSensitive 
+      ? '提交成功（含标记）' 
+      : '提交成功';
+    Taro.showToast({ title: message, icon: 'success' });
     console.log('[ProposalsPage] 新增选题:', newProposal);
   };
 
-  const handleVote = (proposalId: string) => {
-    setProposals(proposals.map(p => 
+  const handleVote = async (proposalId: string) => {
+    const updatedProposals = proposals.map(p => 
       p.id === proposalId ? { ...p, votes: p.votes + 1 } : p
-    ));
+    );
+    await saveData(updatedProposals);
     Taro.showToast({ title: '已投票', icon: 'success' });
     console.log('[ProposalsPage] 投票:', proposalId);
   };
 
   const handleCardClick = (proposal: Proposal) => {
-    Taro.showToast({ title: `查看${proposal.title}`, icon: 'none' });
-    console.log('[ProposalsPage] 点击选题:', proposal);
+    setSelectedProposal(proposal);
+    setShowDetailModal(true);
+    console.log('[ProposalsPage] 查看详情:', proposal);
   };
 
   return (
@@ -151,17 +228,19 @@ const ProposalsPage: React.FC = () => {
             
             <View className={styles.formGroup}>
               <Text className={styles.label}>所属栏目 *</Text>
-              <Input
-                className={styles.input}
-                value={formData.columnId}
-                onInput={(e) => {
-                  const column = columns.find(c => c.name === e.detail.value);
-                  if (column) {
-                    setFormData({ ...formData, columnId: column.id });
-                  }
-                }}
-                placeholder="请输入栏目名称（如：行业洞察）"
-              />
+              <Picker 
+                mode='selector' 
+                range={columns.map(c => c.name)} 
+                value={selectedColumnIndex}
+                onChange={handleColumnChange}
+              >
+                <View className={styles.picker}>
+                  <Text className={styles.pickerText}>
+                    {columns[selectedColumnIndex]?.name || '请选择栏目'}
+                  </Text>
+                  <Text className={styles.pickerArrow}>▼</Text>
+                </View>
+              </Picker>
             </View>
 
             <View className={styles.formGroup}>
@@ -186,12 +265,42 @@ const ProposalsPage: React.FC = () => {
 
             <View className={styles.formGroup}>
               <Text className={styles.label}>核心观点 *</Text>
-              <Input
+              <Textarea
                 className={styles.textarea}
                 value={formData.coreViewpoint}
                 onInput={(e) => setFormData({ ...formData, coreViewpoint: e.detail.value })}
                 placeholder="请输入核心观点"
               />
+            </View>
+
+            <View className={styles.formGroup}>
+              <Text className={styles.label}>参考资料</Text>
+              <View className={styles.referenceInputRow}>
+                <Input
+                  className={styles.referenceInput}
+                  value={referenceInput}
+                  onInput={(e) => setReferenceInput(e.detail.value)}
+                  placeholder="输入链接或描述"
+                />
+                <Button className={styles.addRefButton} onClick={handleAddReference}>
+                  <Text className={styles.addRefButtonText}>+</Text>
+                </Button>
+              </View>
+              {formData.references.length > 0 && (
+                <View className={styles.referenceList}>
+                  {formData.references.map((ref, index) => (
+                    <View key={index} className={styles.referenceItem}>
+                      <Text className={styles.referenceText}>{ref}</Text>
+                      <Button 
+                        className={styles.removeRefButton} 
+                        onClick={() => handleRemoveReference(index)}
+                      >
+                        <Text className={styles.removeRefButtonText}>×</Text>
+                      </Button>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
 
             <View className={styles.modalButtons}>
@@ -202,6 +311,64 @@ const ProposalsPage: React.FC = () => {
                 <Text className={styles.submitButtonText}>提交</Text>
               </Button>
             </View>
+          </View>
+        </View>
+      )}
+
+      {showDetailModal && selectedProposal && (
+        <View className={styles.modalOverlay} onClick={() => setShowDetailModal(false)}>
+          <View className={styles.detailModal} onClick={(e) => e.stopPropagation()}>
+            <Text className={styles.modalTitle}>选题详情</Text>
+            
+            <View className={styles.detailGroup}>
+              <Text className={styles.detailLabel}>栏目</Text>
+              <Text className={styles.detailValue}>{selectedProposal.columnName}</Text>
+            </View>
+            
+            <View className={styles.detailGroup}>
+              <Text className={styles.detailLabel}>标题</Text>
+              <Text className={styles.detailValue}>{selectedProposal.title}</Text>
+            </View>
+            
+            <View className={styles.detailGroup}>
+              <Text className={styles.detailLabel}>目标读者</Text>
+              <Text className={styles.detailValue}>{selectedProposal.targetReader || '未填写'}</Text>
+            </View>
+            
+            <View className={styles.detailGroup}>
+              <Text className={styles.detailLabel}>核心观点</Text>
+              <Text className={styles.detailValue}>{selectedProposal.coreViewpoint}</Text>
+            </View>
+            
+            {selectedProposal.references.length > 0 && (
+              <View className={styles.detailGroup}>
+                <Text className={styles.detailLabel}>参考资料</Text>
+                <View className={styles.referenceList}>
+                  {selectedProposal.references.map((ref, index) => (
+                    <Text key={index} className={styles.referenceText}>{ref}</Text>
+                  ))}
+                </View>
+              </View>
+            )}
+            
+            <View className={styles.detailGroup}>
+              <Text className={styles.detailLabel}>作者</Text>
+              <Text className={styles.detailValue}>{selectedProposal.author}</Text>
+            </View>
+            
+            <View className={styles.detailGroup}>
+              <Text className={styles.detailLabel}>投票数</Text>
+              <Text className={styles.detailValue}>{selectedProposal.votes}</Text>
+            </View>
+            
+            <View className={styles.detailGroup}>
+              <Text className={styles.detailLabel}>评论数</Text>
+              <Text className={styles.detailValue}>{selectedProposal.comments}</Text>
+            </View>
+            
+            <Button className={styles.closeButton} onClick={() => setShowDetailModal(false)}>
+              <Text className={styles.closeButtonText}>关闭</Text>
+            </Button>
           </View>
         </View>
       )}
